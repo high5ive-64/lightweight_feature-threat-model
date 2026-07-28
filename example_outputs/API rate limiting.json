@@ -1,0 +1,72 @@
+{
+  "feature_name": "API rate limiting by API key",
+  "summary": "Enforce per-key rate limits on API endpoints to prevent abuse",
+  "assets": [
+    "API keys and secrets",
+    "Rate limit counters",
+    "Usage metrics",
+    "Client IP addresses"
+  ],
+  "trust_boundaries": [
+    "API gateway to rate limiter",
+    "Rate limiter to data store",
+    "Admin dashboard to rate limit config"
+  ],
+  "threats": [
+    {
+      "stride": "Denial of Service",
+      "title": "Rate limit bypass via key rotation",
+      "scenario": "An attacker rapidly rotates API keys to bypass per-key rate limits.",
+      "impact": "Rate limiting becomes ineffective, allowing API abuse.",
+      "likelihood": "Medium",
+      "severity": "Medium",
+      "mitigations": [
+        "Implement rate limits at multiple levels (key, IP, account)",
+        "Add rate limit on key creation itself",
+        "Track usage patterns across key rotations",
+        "Implement anomaly detection for unusual key usage"
+      ],
+      "assumptions": ["API keys can be created programmatically"]
+    },
+    {
+      "stride": "Elevation of Privilege",
+      "title": "Rate limit configuration tampering",
+      "scenario": "An attacker modifies their own rate limit configuration via API parameter manipulation.",
+      "impact": "Attacker gains higher rate limits than entitled, enabling abuse.",
+      "likelihood": "Low",
+      "severity": "High",
+      "mitigations": [
+        "Never trust client-provided rate limit values",
+        "Enforce rate limits server-side only",
+        "Audit all rate limit configuration changes",
+        "Separate rate limit config from API endpoints"
+      ],
+      "assumptions": ["Rate limits are configurable per tier"]
+    },
+    {
+      "stride": "Tampering",
+      "title": "Rate limit counter manipulation",
+      "scenario": "An attacker manipulates rate limit counters stored in Redis or similar data store.",
+      "impact": "Rate limiting bypassed or legitimate users unfairly blocked.",
+      "likelihood": "Low",
+      "severity": "High",
+      "mitigations": [
+        "Use atomic operations for counter updates",
+        "Secure data store with authentication and network isolation",
+        "Implement counter integrity checks",
+        "Monitor for unusual counter patterns"
+      ],
+      "assumptions": ["Rate limit counters stored in Redis or similar"]
+    }
+  ],
+  "abuse_cases": [
+    "Create multiple API keys to bypass per-key rate limits",
+    "Manipulate rate limit configuration via API parameter injection",
+    "Flood API with requests just under rate limit threshold"
+  ],
+  "security_questions": [
+    "What rate limiting algorithm is used (fixed window, sliding window, token bucket)?",
+    "How are rate limit counters persisted and synced?",
+    "What happens when rate limit is exceeded (429, queue, degrade)?"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "feature_name": "Webhook notifications for order events",
+  "summary": "Send real-time order events to customer-configured webhook URLs",
+  "assets": [
+    "Order data (PII, payment info)",
+    "Customer webhook URLs",
+    "Webhook secret tokens",
+    "Event queue",
+    "Delivery logs"
+  ],
+  "trust_boundaries": [
+    "Internal event processor to external webhook URL",
+    "Database to event processor",
+    "Admin configuration interface"
+  ],
+  "threats": [
+    {
+      "stride": "Information Disclosure",
+      "title": "Webhook payload sent to unauthorized endpoint",
+      "scenario": "An attacker modifies the webhook URL configuration to redirect order events to their own server.",
+      "impact": "Exposure of order data including PII and payment information to attacker-controlled server.",
+      "likelihood": "Medium",
+      "severity": "High",
+      "mitigations": [
+        "Require re-authentication for webhook URL changes",
+        "Send test payload and require confirmation before enabling webhooks",
+        "Log all webhook configuration changes",
+        "Implement webhook URL allowlisting or domain validation"
+      ],
+      "assumptions": ["Webhook URLs can be configured via admin UI or API"]
+    },
+    {
+      "stride": "Tampering",
+      "title": "Webhook payload modified in transit",
+      "scenario": "An attacker intercepts and modifies webhook payloads if sent over unencrypted connection.",
+      "impact": "Customer receives falsified order data, leading to incorrect fulfillment or fraud.",
+      "likelihood": "Low",
+      "severity": "High",
+      "mitigations": [
+        "Enforce HTTPS for all webhook deliveries",
+        "Sign payloads with HMAC using shared secret",
+        "Include payload hash in signature",
+        "Implement retry logic with exponential backoff"
+      ],
+      "assumptions": ["Webhooks are delivered over public internet"]
+    },
+    {
+      "stride": "Spoofing",
+      "title": "Fake webhook callbacks from attacker",
+      "scenario": "An attacker sends fake webhook callbacks to customer endpoints impersonating our service.",
+      "impact": "Customer acts on fraudulent events, leading to financial loss or data corruption.",
+      "likelihood": "Medium",
+      "severity": "High",
+      "mitigations": [
+        "Sign all webhook payloads with HMAC-SHA256",
+        "Include timestamp and reject old signatures (e.g., >5 minutes)",
+        "Document signature verification for customers",
+        "Use unique signing secrets per webhook endpoint"
+      ],
+      "assumptions": ["Customers verify webhook signatures"]
+    }
+  ],
+  "abuse_cases": [
+    "Change webhook URL to attacker-controlled server to intercept order data",
+    "Send fake webhook callbacks with fraudulent order events",
+    "Flood webhook endpoint to trigger dead letter queue exhaustion"
+  ],
+  "security_questions": [
+    "How are webhook secrets generated and stored?",
+    "What is the retry strategy for failed deliveries?",
+    "Are webhook payloads logged and for how long?"
+  ]
+}

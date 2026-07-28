@@ -1,0 +1,75 @@
+{
+  "feature_name": "SAML SSO integration for enterprise customers",
+  "summary": "Enable enterprise customers to authenticate via their identity provider",
+  "assets": [
+    "SAML assertions and tokens",
+    "User session data",
+    "IdP metadata and certificates",
+    "User attribute mappings",
+    "Audit logs"
+  ],
+  "trust_boundaries": [
+    "External IdP to application SSO endpoint",
+    "SSO service to user session store",
+    "Admin configuration interface"
+  ],
+  "threats": [
+    {
+      "stride": "Spoofing",
+      "title": "SAML assertion forgery",
+      "scenario": "An attacker creates a forged SAML assertion to impersonate a legitimate user.",
+      "impact": "Unauthorized access to user accounts, potential admin access.",
+      "likelihood": "Medium",
+      "severity": "Critical",
+      "mitigations": [
+        "Validate SAML signatures using IdP certificate",
+        "Enforce strict audience restriction (Your entity ID)",
+        "Verify assertion timestamps (NotBefore, NotOnOrAfter)",
+        "Implement certificate pinning for IdP certificates",
+        "Use SAML encryption for sensitive assertions"
+      ],
+      "assumptions": ["SAML assertions are received from external IdPs"]
+    },
+    {
+      "stride": "Elevation of Privilege",
+      "title": "Attribute manipulation for privilege escalation",
+      "scenario": "An attacker modifies SAML attributes to gain elevated privileges (e.g., admin role).",
+      "impact": "Attacker gains admin or elevated access to application.",
+      "likelihood": "Medium",
+      "severity": "Critical",
+      "mitigations": [
+        "Never trust client-provided role or group attributes",
+        "Map IdP attributes to roles server-side only",
+        "Implement strict attribute allowlisting",
+        "Audit role assignments and changes",
+        "Use separate admin authentication flow"
+      ],
+      "assumptions": ["User roles are derived from SAML attributes"]
+    },
+    {
+      "stride": "Repudiation",
+      "title": "Missing SSO audit trail",
+      "scenario": "SSO logins are not properly logged, preventing investigation of unauthorized access.",
+      "impact": "Inability to detect or investigate security incidents.",
+      "likelihood": "Low",
+      "severity": "Medium",
+      "mitigations": [
+        "Log all SSO authentication attempts with timestamps",
+        "Include IdP, user ID, and session ID in logs",
+        "Store logs in immutable storage",
+        "Alert on unusual SSO patterns (e.g., multiple IdPs for same user)"
+      ],
+      "assumptions": ["SSO logins are currently not logged"]
+    }
+  ],
+  "abuse_cases": [
+    "Forge SAML assertion to impersonate admin user",
+    "Manipulate SAML attributes to escalate privileges",
+    "Replay captured SAML assertion for unauthorized access"
+  ],
+  "security_questions": [
+    "Which SAML profile is supported (SP-initiated, IdP-initiated, or both)?",
+    "How are IdP certificates managed and rotated?",
+    "What happens when SSO fails (fallback to local auth)?"
+  ]
+}

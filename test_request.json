@@ -1,0 +1,13 @@
+{
+  "feature_name": "Support ticket attachments",
+  "summary": "Customers can upload files when submitting a support ticket.",
+  "actors": ["Customer", "Support Agent"],
+  "data_elements": ["PII", "Attachments", "Ticket metadata"],
+  "entry_points": ["Web form", "REST API"],
+  "trust_boundaries": ["Browser to API", "API to object storage"],
+  "integrations": ["S3", "Malware scanning service"],
+  "internet_facing": true,
+  "authentication": "Authenticated customers via SSO",
+  "authorization": "Customers can access only their own tickets",
+  "sensitive_actions": ["File upload", "File download"]
+}

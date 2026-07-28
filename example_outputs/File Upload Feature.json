@@ -1,0 +1,64 @@
+{
+  "feature_name": "Support ticket attachments",
+  "summary": "Customers can upload files when submitting a support ticket.",
+  "assets": [
+    "Uploaded files",
+    "PII in support tickets",
+    "Ticket metadata",
+    "Customer session tokens",
+    "S3 storage bucket"
+  ],
+  "trust_boundaries": [
+    "Browser to API",
+    "API to object storage",
+    "API to malware scanning service"
+  ],
+  "threats": [
+    {
+      "stride": "Tampering",
+      "title": "Malicious file upload bypasses validation",
+      "scenario": "An attacker uploads a crafted file that bypasses content-type or extension checks and is later processed by downstream systems.",
+      "impact": "Malware delivery, downstream processing compromise, or stored malicious content.",
+      "likelihood": "Medium",
+      "severity": "High",
+      "mitigations": [
+        "Validate file type server-side using magic bytes, not just extension",
+        "Scan all uploads with malware detection before processing",
+        "Store files outside direct web root with no direct URL access",
+        "Generate random object names to prevent enumeration",
+        "Implement file size limits (e.g., max 10MB)"
+      ],
+      "assumptions": [
+        "The feature supports user-supplied file uploads",
+        "Files are stored in S3 or similar object storage"
+      ]
+    },
+    {
+      "stride": "Information Disclosure",
+      "title": "Unauthorized access to uploaded files",
+      "scenario": "A user guesses or reuses file URLs and accesses attachments belonging to another customer.",
+      "impact": "Exposure of PII or sensitive support content.",
+      "likelihood": "Medium",
+      "severity": "High",
+      "mitigations": [
+        "Enforce object-level authorization on every download request",
+        "Use short-lived signed URLs (e.g., 5-minute expiry)",
+        "Avoid predictable object identifiers in URLs",
+        "Log and alert on repeated access failures"
+      ],
+      "assumptions": [
+        "Attachments can be retrieved after upload",
+        "Files are accessible via direct URL"
+      ]
+    }
+  ],
+  "abuse_cases": [
+    "Upload malware disguised as a document (e.g., .exe renamed to .pdf)",
+    "Attempt IDOR against attachment download endpoints to access other users' files"
+  ],
+  "security_questions": [
+    "Are uploads scanned synchronously or asynchronously?",
+    "Are attachments ever rendered inline in the browser?",
+    "What file types and size limits are allowed?"
+  ]
+}
