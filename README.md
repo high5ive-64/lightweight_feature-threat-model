@@ -426,8 +426,3 @@ MIT License – see [LICENSE](LICENSE) for details.
 ---
 
 **Happy threat modeling! 🛡️**
->>>>>>> 64dfa9e (Initial commit)
-=======
-# lightweight_feature-threat-model
-A lightweight API to help create threat models for new prod features
->>>>>>> 70b6d51 (Initial commit)
