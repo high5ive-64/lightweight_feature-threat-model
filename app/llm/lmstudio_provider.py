@@ -1,10 +1,31 @@
 import json
+import re
 from openai import OpenAI
 from pydantic import ValidationError
 from app.config import settings
 from app.llm.base import LLMProvider
 from app.prompting import build_messages
 from app.schemas import FeatureInput, ThreatModelResponse
+
+
+def extract_json_object(text: str) -> str:
+    # If the model wraps JSON in markdown code fences, extract it
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL)
+    if match:
+        return match.group(1)
+    # Otherwise, try to find a top-level {...} block
+    start = text.find("{")
+    if start == -1:
+        return text
+    depth = 0
+    for i, ch in enumerate(text[start:], start=start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i+1]
+    return text[start:]
 
 
 class LMStudioProvider(LLMProvider):
@@ -17,43 +38,37 @@ class LMStudioProvider(LLMProvider):
 
     def generate_threat_model(self, feature: FeatureInput) -> ThreatModelResponse:
         messages = build_messages(feature)
-        retries = 2
+        retries = settings.max_retries
         last_error = None
 
-        for _ in range(retries + 1):
-            response = self.client.responses.create(
+        for attempt in range(retries + 1):
+            response = self.client.chat.completions.create(
                 model=self.model,
-                input=messages,
-                text={"format": {"type": "json_object"}},
+                messages=messages,
+                temperature=0.0,
             )
 
-            raw_text = getattr(response, "output_text", None)
+            raw_text = (response.choices[0].message.content or "").strip()
             if not raw_text:
-                chunks = []
-                for item in getattr(response, "output", []):
-                    if getattr(item, "type", None) != "message":
-                        continue
-                    for content in getattr(item, "content", []):
-                        if getattr(content, "type", None) == "output_text":
-                            chunks.append(content.text)
-                raw_text = "".join(chunks)
-
-            if not raw_text:
-                last_error = ValueError("LM Studio returned no text output")
+                last_error = ValueError("LM Studio returned empty response")
                 messages.append({
                     "role": "system",
-                    "content": "Return only valid JSON matching the schema. Do not include markdown fences or commentary."
+                    "content": "Return only valid JSON matching the schema. Do not include any commentary."
                 })
                 continue
 
+            # Try to extract a JSON object from the text
+            candidate = extract_json_object(raw_text)
+
             try:
-                data = json.loads(raw_text)
+                data = json.loads(candidate)
                 return ThreatModelResponse.model_validate(data)
             except (json.JSONDecodeError, ValidationError) as exc:
                 last_error = exc
+                # Append a stronger system instruction for retry
                 messages.append({
                     "role": "system",
-                    "content": "Your previous answer was invalid. Return only valid JSON matching the exact schema with all required fields."
+                    "content": "Your previous answer was not valid JSON. Return ONLY a JSON object that matches the required schema. No markdown, no explanation."
                 })
 
         raise ValueError(f"LM Studio output failed validation after retries: {last_error}")
