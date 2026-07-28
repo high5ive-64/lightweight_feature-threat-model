@@ -32,7 +32,7 @@
 ```mermaid
 flowchart LR
     A[📋 Feature Request] --> B[🚀 FastAPI Endpoint]
-    B --> C[🤖 Provider चयन\nOpenAI / LM Studio / Claude]
+    B --> C[🤖 Provider > OpenAI / LM Studio / Claude]
     C --> D[🧩 Prompt + Schema]
     D --> E[🛡️ Threat Model JSON]
     E --> F[📝 Markdown Render]
