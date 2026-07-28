@@ -1,91 +1,93 @@
+<h1 align="center">🛡️ Feature Threat Model</h1>
 
-# lightweight_feature-threat-model
-A lightweight API to help create threat models for new prod features
-=======
-# Feature Threat Model
+<p align="center">
+  <a href="https://www.python.org/"><img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-blue.svg"></a>
+  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.116.1-green.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="#configuration"><img alt="Providers" src="https://img.shields.io/badge/LLM-OpenAI%20%7C%20LM%20Studio%20%7C%20Claude-orange.svg"></a>
+</p>
 
-A minimal, opinionated FastAPI service for generating STRIDE-based threat models for new features using real LLM providers.
+<p align="center">
+  A lightweight API to help create threat models for new product features.
+</p>
 
-This tool is designed for **security engineers and engineering managers** who want to integrate threat modeling into their feature development workflow without the overhead of a full threat modeling platform.
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [What is STRIDE?](#what-is-stride)
-- [Use Cases](#use-cases)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [API Endpoints](#api-endpoints)
-- [Example Requests](#example-requests)
-- [Project Structure](#project-structure)
-- [Adding a New Provider](#adding-a-new-provider)
-- [Design Notes](#design-notes)
-- [Security Considerations](#security-considerations)
-- [Contributing](#contributing)
-- [License](#license)
-- [Example Outputs](#example-requests) 
+<p align="center">
+  A minimal, opinionated FastAPI service for generating STRIDE-based threat models using real LLM providers.
+</p>
 
 ---
 
-## Features
+## ✨ What this does
 
-- **STRIDE threat modeling** for feature-level changes
-- **Real LLM backends**:
-  - OpenAI (Responses API with structured parsing)
-  - LM Studio (OpenAI-compatible endpoint with validation retries)
-- **Clean provider abstraction** for easy extension
-- **JSON and Markdown export** endpoints
-- **Simple configuration** via `.env` or environment variables
-- **Lightweight and fast** – no heavy dependencies
+- Generates **STRIDE threat models** for feature-level changes.
+- Supports **OpenAI**, **LM Studio**, and **Anthropic Claude**.
+- Returns results as **JSON** or **Markdown**.
+- Keeps the architecture small and easy to extend.
+- Works well for feature reviews, architecture discussions, and security champion workflows.
 
 ---
 
-## What is STRIDE?
+## 🧠 How it works
+
+```mermaid
+flowchart LR
+    A[📋 Feature Request] --> B[🚀 FastAPI Endpoint]
+    B --> C[🤖 Provider चयन\nOpenAI / LM Studio / Claude]
+    C --> D[🧩 Prompt + Schema]
+    D --> E[🛡️ Threat Model JSON]
+    E --> F[📝 Markdown Render]
+    E --> G[📡 API Response]
+```
+
+1. You send a feature description to the API.
+2. The service builds a structured prompt.
+3. The selected provider generates a STRIDE-based analysis.
+4. The response is validated into a consistent schema.
+5. You get either JSON output or a formatted Markdown report.
+
+---
+
+## 🎯 What is STRIDE?
 
 STRIDE is a threat modeling framework developed by Microsoft that categorizes threats into six types:
 
-| Category | Description | Example |
-|----------|-------------|---------|
+| Category | Meaning | Example |
+|---|---|---|
 | **Spoofing** | Impersonating a user or system | Attacker uses stolen credentials to access user data |
-| **Tampering** | Modifying data or code | Attacker modifies API requests to escalate privileges |
-| **Repudiation** | Denying actions without proof | User claims they didn't perform an action, no audit trail exists |
-| **Information Disclosure** | Exposing sensitive information | API returns more data than intended, exposing PII |
-| **Denial of Service** | Disrupting service availability | Attacker floods endpoint, causing service degradation |
-| **Elevation of Privilege** | Gaining unauthorized access | User exploits bug to access admin functions |
-
-This tool uses STRIDE to systematically identify threats for new features.
+| **Tampering** | Modifying data or code without permission | Attacker modifies API requests to escalate privileges |
+| **Repudiation** | Denying an action without proof | User claims they didn't perform an action, no audit trail exists |
+| **Information Disclosure** | Exposing data to unauthorized parties | API returns more data than intended, exposing PII |
+| **Denial of Service** | Making a system unavailable | Attacker floods endpoint, causing service degradation |
+| **Elevation of Privilege** | Gaining higher access than intended | User exploits bug to access admin functions |
 
 ---
 
-## Use Cases
+## 💡 Use Cases
 
 ### When to Use This Tool
-
-- **Feature design reviews** – Generate threat models during PRD or design doc reviews
-- **Backlog refinement** – Identify security requirements before sprint planning
-- **Architecture discussions** – surface threats in new integrations or trust boundaries
-- **Security champion workflows** – Enable engineers to self-serve threat models
+- **Feature design reviews** – Generate threat models during PRD or design doc reviews.
+- **Backlog refinement** – Identify security requirements before sprint planning.
+- **Architecture discussions** – Surface threats in new integrations or trust boundaries.
+- **Security champion workflows** – Enable engineers to self-serve threat models.
 
 ### Example Scenarios
-
 - "We're adding file uploads to support tickets – what are the threats?"
 - "New webhook integration with third-party service – what could go wrong?"
 - "Adding admin dashboard with elevated privileges – what should we consider?"
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.11+
-- Access to either:
-  - OpenAI API key, or
+- One of the following:
+  - OpenAI API key
   - LM Studio running locally
+  - Anthropic API key
 
-### Step-by-Step
+### Setup
 
 ```bash
 # 1. Clone the repository
@@ -107,28 +109,15 @@ cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-API docs will be available at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Open the docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
-All configuration is managed via `.env` or environment variables.
+Copy `.env.example` to `.env` and update the values.
 
-### Minimal Configuration
-
-```env
-# Choose provider: "openai" or "lmstudio"
-PROVIDER=openai
-
-# OpenAI settings (required if PROVIDER=openai)
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
-```
-
-### Full Configuration
-
-See [CONFIG.md](CONFIG.md) for detailed documentation on all options.
+### Example Configuration
 
 ```env
 # Application Settings
@@ -150,35 +139,33 @@ LMSTUDIO_BASE_URL=http://127.0.0.1:1234/v1
 LMSTUDIO_API_KEY=lm-studio
 LMSTUDIO_MODEL=meta-llama-3.1-8b-instruct
 
+# Claude Settings
+CLAUDE_API_KEY=your-anthropic-api-key
+CLAUDE_MODEL=claude-sonnet-4-20250514
+
 # Threat Model Generation
 MAX_RETRIES=2
 DEFAULT_SEVERITY=Medium
 ```
 
+See [`CONFIG.md`](CONFIG.md) for details.
+
 ---
 
-## API Endpoints
+## 🧪 API Endpoints
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
+|---|---|---|
 | `/health` | GET | Health check and current provider |
-| `/providers` | GET | List supported and configured providers |
+| `/providers` | GET | Supported and configured providers |
 | `/threat-model` | POST | Generate JSON threat model |
 | `/threat-model.md` | POST | Generate Markdown threat model |
 
 ---
 
-## Example Requests
+## 📝 Example Requests
 
-### Example 1: Basic Feature
-
-```bash
-curl -X POST "http://127.0.0.1:8000/threat-model" \
-  -H "Content-Type: application/json" \
-  -d @test_request.json
-```
-
-### Example 2: File Upload Feature
+### Example 1: File Upload Feature
 
 ```json
 {
@@ -196,7 +183,25 @@ curl -X POST "http://127.0.0.1:8000/threat-model" \
 }
 ```
 
-### Example 3: Markdown Export
+### Example 2: Using test_request.json
+
+```bash
+# View the example request
+cat test_request.json
+
+# Send it to the API
+curl -X POST "http://127.0.0.1:8000/threat-model" \
+  -H "Content-Type: application/json" \
+  -d @test_request.json
+
+# Save Markdown output
+curl -X POST "http://127.0.0.1:8000/threat-model.md" \
+  -H "Content-Type: application/json" \
+  -d @test_request.json \
+  -o output.md
+```
+
+### Example 3: Inline Markdown Export
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/threat-model.md" \
@@ -217,54 +222,82 @@ curl -X POST "http://127.0.0.1:8000/threat-model.md" \
   -o threat-model.md
 ```
 
-### Example 4: Using test_request.json
+---
 
-```bash
-# View the example request
-cat test_request.json
+## 🧾 Example Outputs
 
-# Send it to the API
-curl -X POST "http://127.0.0.1:8000/threat-model" \
-  -H "Content-Type: application/json" \
-  -d @test_request.json
+### JSON snippet
 
-# Save Markdown output
-curl -X POST "http://127.0.0.1:8000/threat-model.md" \
-  -H "Content-Type: application/json" \
-  -d @test_request.json \
-  -o output.md
+```json
+{
+  "feature_name": "Support ticket attachments",
+  "summary": "Customers can upload files when submitting a support ticket.",
+  "assets": [
+    "Uploaded files",
+    "PII in support tickets",
+    "Ticket metadata"
+  ],
+  "threats": [
+    {
+      "stride": "Tampering",
+      "title": "Malicious file upload bypasses validation",
+      "severity": "High"
+    }
+  ]
+}
+```
+
+### Markdown snippet
+
+```markdown
+# Threat model: Support ticket attachments
+
+## Threats
+### 1. Malicious file upload bypasses validation
+- STRIDE: Tampering
+- Severity: High
+```
+
+For full examples, see the [`examples/`](examples/) folder, which covers:
+- **File uploads** (`example_output.json`, `example_output.md`)
+- **Webhooks** (`webhook_output.json`, `webhook_output.md`)
+- **Rate limiting** (`ratelimit_output.json`, `ratelimit_output.md`)
+- **SSO** (`sso_output.json`, `sso_output.md`)
+
+---
+
+## 🧩 Project Structure
+
+```text
+feature-threat-model/
+├── app/
+│   ├── main.py              # FastAPI routes and endpoints
+│   ├── config.py            # Centralized configuration
+│   ├── schemas.py           # Pydantic request/response models
+│   ├── prompting.py         # System and user prompt templates
+│   ├── markdown.py          # Markdown report renderer
+│   ├── service.py           # Business logic orchestration
+│   └── llm/
+│       ├── base.py          # Abstract provider interface
+│       ├── factory.py       # Provider selection logic
+│       ├── openai_provider.py # OpenAI implementation
+│       ├── lmstudio_provider.py # LM Studio implementation
+│       └── claude_provider.py # Claude implementation
+├── examples/                # Example request and output files
+├── requirements.txt         # Python dependencies
+├── .env.example             # Configuration template
+├── test_request.json        # Example API request
+├── README.md                # This file
+├── CONFIG.md                # Configuration documentation
+├── CONTRIBUTING.md          # Contribution guidelines
+├── SECURITY.md              # Security considerations
+├── LICENSE                  # MIT license
+└── setup.sh                 # One-line setup script
 ```
 
 ---
 
-## Project Structure
-feature-threat-model/
-├── app/
-│ ├── main.py # FastAPI routes and endpoints
-│ ├── config.py # Centralized configuration
-│ ├── schemas.py # Pydantic request/response models
-│ ├── prompting.py # System and user prompt templates
-│ ├── markdown.py # Markdown report renderer
-│ ├── service.py # Business logic orchestration
-│ └── llm/
-│ ├── base.py # Abstract provider interface
-│ ├── factory.py # Provider selection logic
-│ ├── openai_provider.py # OpenAI implementation
-│ └── lmstudio_provider.py # LM Studio implementation
-├── requirements.txt # Python dependencies
-├── .env.example # Configuration template
-├── test_request.json # Example API request
-├── README.md # This file
-├── CONFIG.md # Configuration documentation
-├── CONTRIBUTING.md # Contribution guidelines
-├── SECURITY.md # Security considerations
-├── LICENSE # MIT license
-└── setup.sh # One-line setup script
-
-
----
-
-## Adding a New Provider
+## ➕ Adding a New Provider
 
 The architecture supports adding new LLM backends easily.
 
@@ -300,6 +333,8 @@ def get_provider() -> LLMProvider:
         return OpenAIProvider()
     if provider == "lmstudio":
         return LMStudioProvider()
+    if provider == "claude":
+        return ClaudeProvider()
     if provider == "your_provider":  # Add this
         return YourProvider()
     raise ValueError(f"Unsupported provider: {provider}")
@@ -317,7 +352,7 @@ PROVIDER=your_provider uvicorn app.main:app --reload
 
 ---
 
-## Design Notes
+## 🏗️ Design Notes
 
 ### Philosophy
 
@@ -356,39 +391,35 @@ All threat models follow a consistent structure:
 
 ---
 
-## Security Considerations
+## 🔐 Security Considerations
 
 ### Secrets Management
-
-- **Never commit `.env`** – It's ignored by `.gitignore`
-- **Use environment variables** in production deployments
-- **Rotate API keys** regularly
+- **Never commit `.env`** – It's ignored by `.gitignore`.
+- **Use environment variables** in production deployments.
+- **Rotate API keys** regularly.
 
 ### LLM Output
-
-- **Treat as untrusted** – Always review and validate
-- **Human in the loop** – Don't auto-apply mitigations
-- **Context matters** – Models may miss domain-specific threats
+- **Treat as untrusted** – Always review and validate.
+- **Human in the loop** – Don't auto-apply mitigations.
+- **Context matters** – Models may miss domain-specific threats.
 
 ### Access Control
-
-- **Internal use** – Consider adding auth (API key, SSO)
-- **Network isolation** – Run behind firewall or VPC
-- **Rate limiting** – Prevent abuse in shared environments
+- **Internal use** – Consider adding auth (API key, SSO).
+- **Network isolation** – Run behind firewall or VPC.
+- **Rate limiting** – Prevent abuse in shared environments.
 
 ### Provider-Specific Notes
-
-- **OpenAI**: Structured output is more reliable but still review
-- **LM Studio**: Local models may be less reliable; use retries
+- **OpenAI**: Structured output is more reliable but still review.
+- **LM Studio**: Local models may be less reliable; use retries.
+- **Claude**: Strong reasoning, handles complex schema validation via retries.
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Contributions are welcome! See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
 
 ### Good First Contributions
-
 - Add new LLM providers (Anthropic, Ollama, etc.)
 - Improve prompt templates for better output
 - Add integrations (Jira, Linear, GitHub Issues)
@@ -396,7 +427,6 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - Enhance documentation and examples
 
 ### How to Contribute
-
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feat/your-feature`)
 3. Make your changes and test locally
@@ -404,25 +434,27 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
-## License
+## 📄 License
 
-MIT License – see [LICENSE](LICENSE) for details.
-
----
-
-## Acknowledgments
-
-- Inspired by [STRIDE GPT](https://github.com/mrwadams/stride-gpt)
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- Uses [Pydantic](https://docs.pydantic.dev/)
+MIT License — see [`LICENSE`](LICENSE) for details.
 
 ---
 
-## Support
+## 🙌 Acknowledgments
+
+- Inspired by [STRIDE GPT](https://github.com/mrwadams/stride-gpt).
+- Built with [FastAPI](https://fastapi.tiangolo.com/) and [Pydantic](https://docs.pydantic.dev/).
+- Designed to be small, practical, and easy to extend.
+
+---
+
+## 💬 Support
 
 - Open an issue for bugs or feature requests
 - Contact maintainers for security-related concerns
 
 ---
 
-**Happy threat modeling! 🛡️**
+<p align="center">
+  <strong>Happy threat modeling! 🛡️</strong>
+</p>
